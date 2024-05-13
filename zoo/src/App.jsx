@@ -1,55 +1,58 @@
+import "./App.css";
+import { useState } from "react";
+import { RouterProvider, createBrowserRouter } from "react-router-dom";
+import Root from "./routes/Root.jsx";
+import Home from "./routes/Home.jsx";
+import About from "./routes/About.jsx";
+import SinglePage from "./routes/SinglePage.jsx";
+import CategoryPage from "./routes/CategoryPage.jsx";
 
-import './App.css'
-import Header from './components/Header';
-import Card from './components/Card';
-import Footer from './components/Footer';
-import { animals } from './animalsList';
-import { useState } from 'react';
-
+import ErrorPage from "./routes/ErrorPage.jsx";
+import { animals, birds, insects, fishes } from "./animalsList";
 
 function App() {
-    const [animalsData, setAnimalsData] = useState(animals);
-    const removeCard = (animal) => {
-    const updatedArray = animalsData.filter(item => item.name !== animal);
-    setAnimalsData(updatedArray);
-    };
-    
-    const likesHandler = (animal, action) => {
-    const updatedArray = animalsData.map(item => {
-        if (item.name === animal) {
-            if(action === 'add') {
-                return {...item, likes: item.likes +1};
-            } else {
-                return {...item, likes: item.likes - 1};
-            }
-        }else {
-            return item;
-        }
-    });
-    setAnimalsData(updatedArray);
-    };
-    
-    
-    return (
-        <>
-        <Header />
-        <main>
-            {animalsData.map(animal => (
-                <Card key = {animal.name} {...animal} 
-                removeLikes = {() => likesHandler(animal.name, 'remove')}
-                /*addLikes={likesHandler.bind(this, animal.name)} */
-                addLikes = {() => likesHandler(animal.name, 'add')}
-                removeCard = {() => removeCard(animal.name)}/>
-            ))}
+    const [zoo, setZoo] = useState({ animals, birds, insects, fishes });
 
-        </main>
-        <Footer /></>
-    );
-  
+    const removeHandler = (name, category) => {
+        setZoo((prevZoo) => ({
+            ...prevZoo,
+            [category]: prevZoo[category].filter((el) => el.name !== name),
+        }));
+    };
+
+    const likesHandler = (name, category, action) => {
+        setZoo((prevZoo) => ({
+            ...prevZoo,
+            [category]: prevZoo[category].map((el) => el.name === name ? { ...el, likes: el.likes + (action === 'add' ? 1 : -1) } : el),
+        }));
+    };
+
+    const router = createBrowserRouter([
+        { path: "/", element: <Home /> },
+        {
+            path: "/",
+            element: <Root />,
+            errorElement: <ErrorPage />,
+            children: [
+                {
+                    path: ":category", element: <CategoryPage
+                        addLikes={likesHandler}
+                        removeCard={removeHandler}
+                        removeLikes={likesHandler}
+                        {...zoo} />
+                },
+                { path: ':category/:name', element: <SinglePage {...zoo} /> },
+                { path: "/about", element: <About /> },
+            ],
+        },
+    ]);
+
+    return <RouterProvider router={router} />;
 }
 
-
-
-
-
 export default App;
+
+// const removeCard = (animal)=>{
+//   const updatedArray = animalsData.filter((item)=>item.name !== animal);
+//   setAnimalsData(updatedArray);
+// };
